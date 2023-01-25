@@ -51,7 +51,7 @@ class SteeringImageDB(object):
                 [66, 200]) / 255.0)
             batch_angles.append([self.train_angles[(self.train_batch_pointer + i) % self.num_train_images]])
         self.train_batch_pointer += batch_size
-        return batch_imgs, batch_angles
+        return np.array(batch_imgs), np.array(batch_angles)
 
     def load_val_batch(self, batch_size):
         batch_imgs = []
@@ -62,4 +62,4 @@ class SteeringImageDB(object):
                 [66, 200]) / 255.0)
             batch_angles.append([self.val_angles[(self.val_batch_pointer + i) % self.num_val_images]])
         self.val_batch_pointer += batch_size
-        return batch_imgs, batch_angles
+        return np.array(batch_imgs), np.array(batch_angles)
