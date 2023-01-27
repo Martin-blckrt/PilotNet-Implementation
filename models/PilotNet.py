@@ -1,61 +1,61 @@
+from abc import ABC
+
 import tensorflow as tf
 
 
-class convLayer(tf.Module):
-    def __init__(self, w_shape, b_shape, name=None):
-        super().__init__(name=name)
-        self.w = tf.Variable(tf.random.truncated_normal(w_shape, stddev=0.1), name='w', trainable=True)
-        self.b = tf.Variable(tf.constant(0.1, shape=b_shape), name='b', trainable=True)
-
-    def __call__(self, x, stride):
-        y = tf.nn.conv2d(x, self.w, strides=[1, stride, stride, 1], padding='SAME') + self.b
-        return tf.nn.relu(y)
-
-
-class FCL(tf.Module):
-    def __init__(self, w_shape, b_shape, name=None):
-        super().__init__(name=name)
-        self.w = tf.Variable(tf.random.truncated_normal(w_shape, stddev=0.1), name='w')
-        self.b = tf.Variable(tf.constant(0.1, shape=b_shape), name='b')
-
-    def __call__(self, x, keep_prob, last=False):
-        if last:
-            y = tf.atan(tf.matmul(x, self.w) + self.b)  # scale the atan output
-            return tf.multiply(y, 2)
-        else:
-            y = tf.nn.relu(tf.matmul(x, self.w) + self.b)
-            return tf.nn.dropout(y, rate=keep_prob)
-
-
-class PilotNet(tf.Module):
+class PilotNet(tf.keras.Model, ABC):
     def __init__(self, name=None):
-        super().__init__(name=name)
+        super(PilotNet, self).__init__(name=name)
 
-        self.conv_1 = convLayer(w_shape=[5, 5, 3, 24], b_shape=[24], name="conv1")
-        self.conv_2 = convLayer(w_shape=[5, 5, 24, 36], b_shape=[36], name="conv2")
-        self.conv_3 = convLayer(w_shape=[5, 5, 36, 48], b_shape=[48], name="conv3")
-        self.conv_4 = convLayer(w_shape=[3, 3, 48, 64], b_shape=[64], name="conv4")
-        self.conv_5 = convLayer(w_shape=[3, 3, 64, 64], b_shape=[64], name="conv5")
+        self.w_fc1 = tf.Variable(tf.random.truncated_normal(shape=[5, 5, 3, 24], stddev=0.1))
+        self.w_fc2 = tf.Variable(tf.random.truncated_normal(shape=[5, 5, 24, 36], stddev=0.1))
+        self.w_fc3 = tf.Variable(tf.random.truncated_normal(shape=[5, 5, 36, 48], stddev=0.1))
+        self.w_fc4 = tf.Variable(tf.random.truncated_normal(shape=[5, 5, 48, 64], stddev=0.1))
+        self.w_fc5 = tf.Variable(tf.random.truncated_normal(shape=[5, 5, 64, 64], stddev=0.1))
 
-        self.fcl_1 = FCL(w_shape=[1344, 1164], b_shape=[1164], name="fcl1")
-        self.fcl_2 = FCL(w_shape=[1164, 100], b_shape=[100], name="fcl2")
-        self.fcl_3 = FCL(w_shape=[100, 50], b_shape=[50], name="fcl3")
-        self.fcl_4 = FCL(w_shape=[50, 10], b_shape=[10], name="fcl4")
-        self.fcl_5 = FCL(w_shape=[10, 1], b_shape=[1], name="fcl5")
+        self.conv1 = tf.keras.layers.Conv2D(24, [5, 5, 3, 24], strides=(2, 2), padding='same', activation='relu',
+                                            use_bias=True, bias_initializer=tf.constant(0.1, shape=[24]),
+                                            weights=self.w_fc1)
+        self.conv2 = tf.keras.layers.Conv2D(36, (5, 5), strides=(2, 2), padding='valid', activation='relu',
+                                            use_bias=True, bias_initializer=tf.constant(0.1, shape=[36]),
+                                            weights=self.w_fc2)
+        self.conv3 = tf.keras.layers.Conv2D(48, (5, 5), strides=(2, 2), padding='valid', activation='relu',
+                                            use_bias=True, bias_initializer=tf.constant(0.1, shape=[48]),
+                                            weights=self.w_fc3)
+        self.conv4 = tf.keras.layers.Conv2D(64, (3, 3), strides=(1, 1), padding='valid', activation='relu',
+                                            use_bias=True, bias_initializer=tf.constant(0.1, shape=[64]),
+                                            weights=self.w_fc4)
+        self.conv5 = tf.keras.layers.Conv2D(64, (3, 3), strides=(1, 1), padding='valid', activation='relu',
+                                            use_bias=True, bias_initializer=tf.constant(0.1, shape=[64]),
+                                            weights=self.w_fc5)
+        self.fc1 = tf.keras.layers.Dense(1164, activation='relu')
+        self.fc2 = tf.keras.layers.Dense(100, activation='relu')
+        self.fc3 = tf.keras.layers.Dense(50, activation='relu')
+        self.fc4 = tf.keras.layers.Dense(10, activation='relu')
+        self.fc5 = tf.keras.layers.Dense(1)
+        self.dropout = tf.keras.layers.Dropout(0.8)
 
-    def __call__(self, x, keep_prob=0.8):
-        x = self.conv_1(x, 2)
-        x = self.conv_2(x, 2)
-        x = self.conv_3(x, 2)
-        x = self.conv_4(x, 2)
-        x = self.conv_5(x, 2)
+        self.x = tf.Variable(tf.zeros((66, 200, 3)), trainable=False, dtype=tf.float32)
+        self.y_ = tf.Variable(tf.zeros((1, 1)), trainable=False, dtype=tf.float32)
+        self.steering = tf.Variable(tf.zeros((1, 1)), trainable=False, dtype=tf.float32)
+
+    def __call__(self, inputs, training=False):
+        x = self.conv1(inputs)
+        x = self.conv2(x)
+        x = self.conv3(x)
+        x = self.conv4(x)
+        x = self.conv5(x)
 
         x = tf.reshape(x, [-1, 1344])
 
-        x = self.fcl_1(x, keep_prob)
-        x = self.fcl_2(x, keep_prob)
-        x = self.fcl_3(x, keep_prob)
-        x = self.fcl_4(x, keep_prob)
-        x = self.fcl_5(x, keep_prob, True)
+        x = self.fc1(x)
+        x = self.dropout(x, training=training)
+        x = self.fc2(x)
+        x = self.dropout(x, training=training)
+        x = self.fc3(x)
+        x = self.dropout(x, training=training)
+        x = self.fc4(x)
+        x = self.dropout(x, training=training)
+        x = self.fc5(x)
 
         return x
