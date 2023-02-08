@@ -1,0 +1,8 @@
+tensorflow
+tensorflow-cloud
+keras
+numpy
+scikit-image
+opencv-python
+scipy
+matplotlib

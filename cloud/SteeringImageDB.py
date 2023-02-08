@@ -1,8 +1,7 @@
 import numpy as np
 import random
 import skimage
-from PIL import Image
-from keras.preprocessing import image
+import tensorflow_cloud as tfc
 
 
 class SteeringImageDB(object):
@@ -17,6 +16,7 @@ class SteeringImageDB(object):
 
         # read data.txt
         data_path = data_directory + "/"
+
         with open(data_path + "data.txt") as f:
             for line in f:
                 imgs.append(data_path + line.split()[0])
