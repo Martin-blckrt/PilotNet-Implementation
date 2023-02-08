@@ -7,6 +7,7 @@ test_dataset_dir = './data/driving_dataset/mini_driving_dataset'
 log_directory = './logs/'
 
 name = "myPilotNet"
+GCP_BUCKET = 'pilotnet_bucket'
 
 learning_rate = 1e-4
 

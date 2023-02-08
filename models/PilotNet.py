@@ -1,12 +1,16 @@
 import tensorflow as tf
 import keras
 from keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
+import datetime
+import os
 
 num_epochs = 30
 test_num_epochs = 5
 
 batch_size = 128
 
+GCP_BUCKET = 'pilotnet_bucket'
+MODEL_PATH = "pilotnetCloudV1"
 
 class PilotNet(keras.Model):
     def __init__(self, learning_rate, input_shape, name=None):
@@ -49,12 +53,16 @@ class PilotNet(keras.Model):
 
     def train(self, dataset, filename):
 
+        checkpoint_path = os.path.join("gs://", GCP_BUCKET, MODEL_PATH, "save_at_{epoch}")
+        tensorboard_path = os.path.join(
+            "gs://", GCP_BUCKET, "logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        )
         model_file_name = './saves/pilotnet-model' + '-{epoch:03d}-{val_loss:.5f}.h5'
 
         callbacks_list = [
-            ModelCheckpoint(model_file_name, monitor='val_accuracy', verbose=1, save_best_only=True),
+            ModelCheckpoint(checkpoint_path, monitor='val_accuracy', verbose=1, save_best_only=False),
             EarlyStopping(monitor='val_accuracy', patience=5, verbose=0),
-            TensorBoard(log_dir='./tensorboard/', histogram_freq=0, write_graph=False, write_images=False)
+            TensorBoard(log_dir=tensorboard_path, histogram_freq=0, write_graph=False, write_images=False)
         ]
 
         x, y = dataset.load_data(data_type='train')

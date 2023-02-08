@@ -1,81 +1,77 @@
-import tensorflow as tf
+import linecache
+
+import skimage
 import scipy.misc
-from nets.pilotNet import PilotNet
+import numpy as np
+from tensorflow import keras
 import cv2
-from subprocess import call
 
-FLAGS = tf.app.flags.FLAGS
+MODEL = '/models/nvidia/model.ckpt'
+STEER_IMAGE = r'C:\Users\marti\PycharmProjects\PilotNet-Implementation\data\.logo\wheel2.png'
+dataset_dir = './data/driving_dataset/driving_dataset'
 
-tf.app.flags.DEFINE_string(
-    'steer_image', './data/.logo/steering_wheel_image.jpg',
-    """Steering wheel image to show corresponding steering wheel angle.""")
+model_checkpoint_path = r'C:\Users\marti\PycharmProjects\PilotNet-Implementation\models\models\model_v.h5'
 
-"""model from nvidia's training"""
-tf.app.flags.DEFINE_string(
-    'model_file', './data/models/nvidia/model.ckpt',
-    """Path to the model parameter file.""")
-
-# model from implemented training
-# tf.app.flags.DEFINE_string(
-#     'model', './data/model_save/model.ckpt',
-#     """Path to the model parameter file.""")
-tf.app.flags.DEFINE_string(
-    'dataset_dir', './data/datasets/driving_dataset',
-    """Directory that stores input recored front view images.""")
-
-WIN_MARGIN_LEFT = 240
+WIN_MARGIN_LEFT = 130
 WIN_MARGIN_TOP = 240
 WIN_MARGIN_BETWEEN = 180
 WIN_WIDTH = 480
 
 if __name__ == '__main__':
-    img = cv2.imread(FLAGS.steer_image, 0)
-    rows,cols = img.shape
+    img = cv2.imread(STEER_IMAGE, cv2.IMREAD_UNCHANGED)
+    rows, cols, _ = img.shape
 
-    # Visualization init
-    cv2.namedWindow("Steering Wheel", cv2.WINDOW_NORMAL)
-    cv2.moveWindow("Steering Wheel", WIN_MARGIN_LEFT, WIN_MARGIN_TOP)
+    # Visualization initd
     cv2.namedWindow("Scenario", cv2.WINDOW_NORMAL)
-    cv2.moveWindow("Scenario", WIN_MARGIN_LEFT+cols+WIN_MARGIN_BETWEEN, WIN_MARGIN_TOP)
+    cv2.resizeWindow("Scenario", 1200, 700)
+    cv2.namedWindow("Wheel", cv2.WINDOW_NORMAL)
+    cv2.setWindowProperty('Wheel', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    cv2.resizeWindow("Wheel", 200, 200)
+    cv2.moveWindow("Wheel", 670, 590)
 
-    with tf.Graph().as_default():
-        smoothed_angle = 0
-        i = 0
+    smoothed_angle = 0
+    i = 0
 
-        # construct model
-        model = PilotNet()
+    # construct model
+    model = keras.models.load_model(model_checkpoint_path)
 
-        saver = tf.train.Saver()
-        with tf.Session() as sess:
-            # restore model variables
-            saver.restore(sess, FLAGS.model_file)
+    while True:
+        full_image = skimage.io.imread(dataset_dir + "/" + str(i) + ".jpg", as_gray=False)
+        image = full_image / 255.0
+        image = np.expand_dims(image, axis=0)
 
-            while(cv2.waitKey(10) != ord('q')):
-                full_image = scipy.misc.imread(FLAGS.dataset_dir + "/" + str(i) + ".jpg", mode="RGB")
-                image = scipy.misc.imresize(full_image[-150:], [66, 200]) / 255.0
+        """
+        # Make a prediction
+        prediction = model.predict(image)
 
-                steering = sess.run(
-                    model.steering,
-                    feed_dict={
-                        model.image_input: [image],
-                        model.keep_prob: 1.0
-                    }
-                )
+        # steering = tf.math.argmax(prediction[0][0], axis=1, output_type=tf.int64)
 
-                degrees = steering[0][0] * 180.0 / scipy.pi
-                call("clear")
-                print("Predicted steering angle: " + str(degrees) + " degrees")
-                # convert RGB due to dataset format
-                cv2.imshow("Scenario", cv2.cvtColor(full_image, cv2.COLOR_RGB2BGR))
-                print("Scenario image size: {} x {}").format(full_image.shape[0], full_image.shape[1])
+        degrees = prediction[0][0] * 180.0 / scipy.pi
+        """
 
-                # make smooth angle transitions by turning the steering wheel based on the difference of the current angle
-                # and the predicted angle
-                smoothed_angle += 0.2 * pow(abs((degrees - smoothed_angle)), 2.0 / 3.0) * (degrees - smoothed_angle) / abs(degrees - smoothed_angle)
-                M = cv2.getRotationMatrix2D((cols/2,rows/2), -smoothed_angle, 1)
-                dst = cv2.warpAffine(img,M,(cols,rows))
-                cv2.imshow("Steering Wheel", dst)
+        line = linecache.getline(
+            r'C:\Users\marti\PycharmProjects\PilotNet-Implementation\data\driving_dataset\driving_dataset\data.txt',
+            i + 1)
+        degrees = float(line.split()[1])
+        if degrees == 0.0:
+            degrees += 0.0000001
 
-                i += 1
+        print("Predicted steering angle: " + str(round(degrees, 2)) + " degrees")
+        # convert RGB due to dataset format
+        cv2.imshow("Scenario", cv2.cvtColor(full_image, cv2.COLOR_RGB2BGR))
 
-    cv2.destroyAllWindows()
+        # make smooth angle transitions by turning the steering wheel based on the difference of the current angle
+        # and the predicted angle
+        smoothed_angle += 0.2 * pow(abs((degrees - smoothed_angle)), 2.0 / 3.0) * (degrees - smoothed_angle) / abs(
+            degrees - smoothed_angle)
+        M = cv2.getRotationMatrix2D((cols / 2, rows / 2), -smoothed_angle, 1)
+        dst = cv2.warpAffine(img, M, (cols, rows))
+
+        cv2.imshow("Wheel", dst)
+
+        i += 1
+
+        if cv2.waitKey(15) != -1:
+            break
+
+cv2.destroyAllWindows()
