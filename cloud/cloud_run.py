@@ -6,5 +6,5 @@ tfc.run(
     docker_image_bucket_name='pilotnet_bucket',
     chief_config=tfc.COMMON_MACHINE_CONFIGS['V100_1X'],
     worker_count=1,
-    worker_config=tfc.COMMON_MACHINE_CONFIGS['V100_4X']
+    worker_config=tfc.COMMON_MACHINE_CONFIGS['V100_1X']
 )

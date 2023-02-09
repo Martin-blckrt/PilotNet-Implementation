@@ -2,7 +2,10 @@ import numpy as np
 import random
 import skimage
 import tensorflow_cloud as tfc
+from tensorflow.python.lib.io import file_io
+import tensorflow as tf
 
+# tf.image.flip_left_right for bigger dataset
 
 class SteeringImageDB(object):
     """Preprocess images of the road ahead and steering angles."""
@@ -15,21 +18,26 @@ class SteeringImageDB(object):
         self.height = height
 
         # read data.txt
-        data_path = data_directory + "/"
-
-        with open(data_path + "data.txt") as f:
-            for line in f:
+        if tfc.remote():
+            data_path = "gs://pilotnet_bucket/driving-dataset/"
+            for line in tf.io.gfile.GFile("gs://pilotnet_bucket/driving-dataset/data.txt"):
                 imgs.append(data_path + line.split()[0])
-                """ the paper by Nvidia uses the inverse of the turning radius, 
-                but steering wheel angle is proportional to the inverse of turning radius
-                so the steering wheel angle in radians is used as the output """
                 angles.append(float(line.split()[1]) * np.pi / 180)
+        else:
+            data_path = data_directory + "/"
+            with open(data_path + "data.txt") as f:
+                for line in f:
+                    imgs.append(data_path + line.split()[0])
+                    """ the paper by Nvidia uses the inverse of the turning radius, 
+                    but steering wheel angle is proportional to the inverse of turning radius
+                    so the steering wheel angle in radians is used as the output """
+                    angles.append(float(line.split()[1]) * np.pi / 180)
 
-                # flip the image horizontally to augment dataset
-                '''
-                imgs.append(image.load_img(data_path + line.split()[0]).transpose(Image.FLIP_LEFT_RIGHT))
-                angles.append(-(float(line.split()[1]) * np.pi / 180))                
-                '''
+                    # flip the image horizontally to augment dataset
+                    '''
+                    imgs.append(image.load_img(data_path + line.split()[0]).transpose(Image.FLIP_LEFT_RIGHT))
+                    angles.append(-(float(line.split()[1]) * np.pi / 180))                
+                    '''
 
         # shuffle list of images
         img_angle_pack = list(zip(imgs, angles))
@@ -58,15 +66,28 @@ class SteeringImageDB(object):
         angles = []
 
         if data_type == 'train':
+
             for i in range(0, self.num_train_images):
-                imgs.append(
-                    skimage.transform.resize(skimage.io.imread(self.train_imgs[i]), [self.height, self.width]) / 255.0)
+                if tfc.remote():
+                    imgs.append(skimage.transform.resize(tf.io.decode_image(tf.io.read_file(self.train_imgs[i])),
+                                                         [self.height, self.width]) / 255.0)
+                else:
+                    imgs.append(
+                        skimage.transform.resize(skimage.io.imread(self.train_imgs[i]),
+                                                 [self.height, self.width]) / 255.0)
                 angles.append(self.train_angles[i])
 
         elif data_type == 'val':
+
             for i in range(0, self.num_val_images):
-                imgs.append(
-                    skimage.transform.resize(skimage.io.imread(self.val_imgs[i]), [self.height, self.width]) / 255.0)
+                if tfc.remote():
+                    imgs.append(skimage.transform.resize(tf.io.decode_image(tf.io.read_file(self.val_imgs[i])),
+                                                         [self.height, self.width]) / 255.0)
+                else:
+                    imgs.append(
+                        skimage.transform.resize(skimage.io.imread(self.val_imgs[i]),
+                                                 [self.height, self.width]) / 255.0)
+
                 angles.append(self.val_angles[i])
 
         return np.array(imgs), np.array(angles)

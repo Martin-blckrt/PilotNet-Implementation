@@ -1,8 +1,9 @@
 from SteeringImageDB import SteeringImageDB
 from PilotNet import PilotNet
 import tensorflow_cloud as tfc
+import tensorflow as tf
 
-dataset_dir = './driving_dataset'
+dataset_dir = '../data/driving_dataset/driving_dataset'
 test_dataset_dir = '../data/driving_dataset/mini_driving_dataset'
 
 name = "myPilotNet"
@@ -17,6 +18,6 @@ if tfc.remote():
 else:
     dataset = SteeringImageDB(test_dataset_dir, resize_width, resize_height)
 
-pilotNetModel = PilotNet(learning_rate=learning_rate, input_shape=(resize_height, resize_width, 3), name=name)
+    pilotNetModel = PilotNet(learning_rate=learning_rate, input_shape=(resize_height, resize_width, 3), name=name)
 
-pilotNetModel.train(dataset=dataset, filename='./models/' + name)
+    pilotNetModel.train(dataset=dataset, filename='./models/' + name)
