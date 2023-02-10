@@ -1,8 +1,25 @@
+# --extra-index-url=https://developer.download.nvidia.com/compute/redist/jp
+# --trusted-host=sqrl.nvidia.com
+
 tensorflow
 tensorflow-cloud
 keras
-numpy
+numpy==1.22.4
 scikit-image
 opencv-python
 scipy
 matplotlib
+protobuf==3.19.6
+google-api-python-client==1.12.11
+requests==2.26
+httplib2==0.20.4
+dill==0.3.1.1
+grpcio==1.51.1
+urllib3==1.26.0
+
+
+# nvidia-tensorrt
+# nvidia-cudnn-cu12
+# nvidia-pyindex -i https://nvidia.github.io/nvidia-python-index/
+
+# --use-feature=2020-resolver

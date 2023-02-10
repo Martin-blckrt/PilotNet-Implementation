@@ -42,16 +42,17 @@ class PilotNet(keras.Model, ABC):
         steering_angle = tf.keras.layers.Dense(units=1, activation='linear')(x)
 
         # build and compile model
-        model = keras.Model(inputs=[inputs], outputs=[steering_angle])
+        model = keras.Model(inputs=[inputs], outputs=steering_angle)
         model.compile(
             optimizer=keras.optimizers.Adam(self.learning_rate),
-            loss={'steering_angle': 'mse'},
+            loss=keras.losses.MeanSquaredError(reduction="auto", name="mean_squared_error"),
             metrics=['accuracy']
         )
         model.summary()
         return model
 
     def train(self, dataset, filename):
+        print("Entered train.")
         checkpoint_path = os.path.join("gs://", GCP_BUCKET, MODEL_PATH, "save_at_{epoch}")
         tensorboard_path = os.path.join(
             "gs://", GCP_BUCKET, "logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -64,7 +65,7 @@ class PilotNet(keras.Model, ABC):
         ]
 
         x, y = dataset.load_data(data_type='train')
-
+        print("Loaded data.")
         if tfc.remote():
             epochs = 50
         else:
@@ -79,6 +80,8 @@ class PilotNet(keras.Model, ABC):
                                  verbose=1,
                                  validation_data=dataset.load_data(data_type='val'),
                                  callbacks=callbacks_list)
+
+        print("Model fitted.")
 
         # save the trained model
         if tfc.remote():
