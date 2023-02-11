@@ -18,7 +18,8 @@ else:
     dataset = SteeringImageDB(test_dataset_dir, resize_width, resize_height)
 
 print("Loading model.")
-pilotNetModel = PilotNet(learning_rate=learning_rate, input_shape=(resize_height, resize_width, 3), name=name)
-print("Model loaded.")
+pilotNetModel = PilotNet(learning_rate=learning_rate, input_shape=(resize_height, resize_width, 3), name=name,
+                         dataset=dataset)
+print("Model is all good.")
 
-pilotNetModel.train(dataset=dataset, filename='./models/' + name)
+# pilotNetModel.train(dataset=dataset, filename='./models/' + name)

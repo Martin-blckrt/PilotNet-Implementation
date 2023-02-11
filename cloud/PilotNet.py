@@ -13,11 +13,12 @@ MODEL_PATH = "pilotnetCloudV1"
 
 
 class PilotNet(keras.Model, ABC):
-    def __init__(self, learning_rate, input_shape, name=None):
+    def __init__(self, dataset, learning_rate, input_shape, name=None):
         super().__init__(name=name)
         self.i_shape = input_shape
         self.learning_rate = learning_rate
         self.model = self.build_model()
+        self.train(dataset=dataset, filename='./models/' + name)
 
     def build_model(self):
         inputs = keras.Input(name='input_shape', shape=self.i_shape)

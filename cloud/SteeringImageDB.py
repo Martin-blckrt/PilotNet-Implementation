@@ -77,6 +77,9 @@ class SteeringImageDB(object):
                                                  [self.height, self.width]) / 255.0)
                 angles.append(self.train_angles[i])
 
+                if i % 5000 == 0:
+                    print("%i train images loaded", i)
+
         elif data_type == 'val':
 
             for i in range(0, self.num_val_images):
@@ -89,5 +92,8 @@ class SteeringImageDB(object):
                                                  [self.height, self.width]) / 255.0)
 
                 angles.append(self.val_angles[i])
+
+                if i % 3000 == 0:
+                    print("%i validation images loaded", i)
 
         return np.array(imgs), np.array(angles)
