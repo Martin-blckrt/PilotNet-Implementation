@@ -66,7 +66,7 @@ class PilotNet(keras.Model, ABC):
         ]
 
         x, y = dataset.load_data(data_type='train')
-        print("Loaded data.")
+        print("Loaded training data.")
         if tfc.remote():
             epochs = 50
         else:

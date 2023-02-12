@@ -96,4 +96,5 @@ class SteeringImageDB(object):
                 if i % 3000 == 0:
                     print("%i validation images loaded", i)
 
+            print("Loaded validation data.")
         return np.array(imgs), np.array(angles)

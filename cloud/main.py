@@ -20,6 +20,6 @@ else:
 print("Loading model.")
 pilotNetModel = PilotNet(learning_rate=learning_rate, input_shape=(resize_height, resize_width, 3), name=name,
                          dataset=dataset)
-print("Model is all good.")
+print("Model is loaded.")
 
-# pilotNetModel.train(dataset=dataset, filename='./models/' + name)
+pilotNetModel.train(dataset=dataset, filename='./models/' + name)
