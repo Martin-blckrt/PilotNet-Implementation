@@ -10,7 +10,7 @@ MODEL = '/models/nvidia/model.ckpt'
 STEER_IMAGE = r'C:\Users\marti\PycharmProjects\PilotNet-Implementation\data\.logo\steering-wheel.png'
 dataset_dir = './data/driving_dataset/driving_dataset'
 
-model_checkpoint_path = r"C:\Users\marti\PycharmProjects\PilotNet-Implementation\models\saves"
+model_checkpoint_path = r"C:\Users\marti\PycharmProjects\PilotNet-Implementation\models\saves\pilotnetCloudV1"
 
 WIN_MARGIN_LEFT = 130
 WIN_MARGIN_TOP = 240
@@ -34,11 +34,11 @@ if __name__ == '__main__':
 
     # construct model
     # model = keras.models.load_model(model_checkpoint_path)
-    model = tf.saved_model.load(model_checkpoint_path)
+    model = tf.keras.models.load_model(model_checkpoint_path)
 
     while True:
         full_image = skimage.io.imread(dataset_dir + "/" + str(i) + ".jpg", as_gray=False)
-        image = full_image / 255.0
+        image = skimage.transform.resize(full_image, [66, 200]) / 255.0
         image = np.expand_dims(image, axis=0)
 
         # Make a prediction

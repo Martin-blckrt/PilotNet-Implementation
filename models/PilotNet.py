@@ -80,3 +80,6 @@ class PilotNet(keras.Model):
         self.model.save(f"models/{filename}.h5")
 
         input('\nPress [ENTER] to continue...')
+
+    def predict(self, image):
+        return steering_angle
