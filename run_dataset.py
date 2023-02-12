@@ -9,6 +9,7 @@ import cv2
 MODEL = '/models/nvidia/model.ckpt'
 STEER_IMAGE = r'C:\Users\marti\PycharmProjects\PilotNet-Implementation\data\.logo\steering-wheel.png'
 dataset_dir = './data/driving_dataset/driving_dataset'
+other_dataset_dir = './data/driving_dataset/other_driving_dataset'
 
 model_checkpoint_path = r"C:\Users\marti\PycharmProjects\PilotNet-Implementation\models\saves\pilotnetCloudV1"
 
@@ -37,7 +38,7 @@ if __name__ == '__main__':
     model = tf.keras.models.load_model(model_checkpoint_path)
 
     while True:
-        full_image = skimage.io.imread(dataset_dir + "/" + str(i) + ".jpg", as_gray=False)
+        full_image = skimage.io.imread(other_dataset_dir + "/" + str(i) + ".jpg", as_gray=False)
         image = skimage.transform.resize(full_image, [66, 200]) / 255.0
         image = np.expand_dims(image, axis=0)
 
