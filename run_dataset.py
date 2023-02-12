@@ -1,5 +1,5 @@
 import linecache
-
+import tensorflow as tf
 import skimage
 import scipy.misc
 import numpy as np
@@ -7,10 +7,10 @@ from tensorflow import keras
 import cv2
 
 MODEL = '/models/nvidia/model.ckpt'
-STEER_IMAGE = r'C:\Users\marti\PycharmProjects\PilotNet-Implementation\data\.logo\wheel2.png'
+STEER_IMAGE = r'C:\Users\marti\PycharmProjects\PilotNet-Implementation\data\.logo\steering-wheel.png'
 dataset_dir = './data/driving_dataset/driving_dataset'
 
-model_checkpoint_path = r'C:\Users\marti\PycharmProjects\PilotNet-Implementation\models\models\model_v.h5'
+model_checkpoint_path = r"C:\Users\marti\PycharmProjects\PilotNet-Implementation\models\saves"
 
 WIN_MARGIN_LEFT = 130
 WIN_MARGIN_TOP = 240
@@ -33,14 +33,14 @@ if __name__ == '__main__':
     i = 0
 
     # construct model
-    model = keras.models.load_model(model_checkpoint_path)
+    # model = keras.models.load_model(model_checkpoint_path)
+    model = tf.saved_model.load(model_checkpoint_path)
 
     while True:
         full_image = skimage.io.imread(dataset_dir + "/" + str(i) + ".jpg", as_gray=False)
         image = full_image / 255.0
         image = np.expand_dims(image, axis=0)
 
-        """
         # Make a prediction
         prediction = model.predict(image)
 
@@ -50,11 +50,12 @@ if __name__ == '__main__':
         """
 
         line = linecache.getline(
-            r'C:\Users\marti\PycharmProjects\PilotNet-Implementation\data\driving_dataset\driving_dataset\data.txt',
+            r'C://Users/marti/PycharmProjects/PilotNet-Implementation/data/driving_dataset/driving_dataset/data.txt',
             i + 1)
         degrees = float(line.split()[1])
         if degrees == 0.0:
             degrees += 0.0000001
+        """
 
         print("Predicted steering angle: " + str(round(degrees, 2)) + " degrees")
         # convert RGB due to dataset format
