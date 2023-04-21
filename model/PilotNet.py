@@ -5,10 +5,11 @@ import datetime
 import os
 
 num_epochs = 30
-test_num_epochs = 5
+test_num_epochs = 2
 
 batch_size = 128
 
+# define google cloud platform bucket for cloud training
 GCP_BUCKET = 'pilotnet_bucket'
 MODEL_PATH = "pilotnetCloudV1"
 
@@ -45,18 +46,16 @@ class PilotNet(keras.Model):
         model = keras.Model(inputs=[inputs], outputs=[steering_angle])
         model.compile(
             optimizer=keras.optimizers.Adam(self.learning_rate),
-            loss={'steering_angle': 'mse'},
+            loss={'dense_3': 'mse'},
             metrics=['accuracy']
         )
         model.summary()
         return model
 
     def train(self, dataset, filename):
-
+        # if training is done on cloud, define monitoring
         checkpoint_path = os.path.join("gs://", GCP_BUCKET, MODEL_PATH, "save_at_{epoch}")
-        tensorboard_path = os.path.join(
-            "gs://", GCP_BUCKET, "logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        )
+        tensorboard_path = os.path.join("gs://", GCP_BUCKET, "logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
         model_file_name = './saves/pilotnet-model' + '-{epoch:03d}-{val_loss:.5f}.h5'
 
         callbacks_list = [
@@ -65,6 +64,7 @@ class PilotNet(keras.Model):
             TensorBoard(log_dir=tensorboard_path, histogram_freq=0, write_graph=False, write_images=False)
         ]
 
+        # load data
         x, y = dataset.load_data(data_type='train')
 
         # fit data to model for training
@@ -77,9 +77,4 @@ class PilotNet(keras.Model):
                                  callbacks=callbacks_list)
 
         # save the trained model
-        self.model.save(f"models/{filename}.h5")
-
-        input('\nPress [ENTER] to continue...')
-
-    def predict(self, image):
-        return steering_angle
+        self.model.save(f"model/{model_file_name}.h5")
