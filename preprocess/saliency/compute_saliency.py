@@ -5,9 +5,9 @@ import core
 import cv2
 import matplotlib.pyplot as plt
 
-dataset_dir = './data/saliency_dataset/'
-save_dir = '../data/saliency_dataset/'
-model_checkpoint_path = '../model/pilotnetCloudV1'
+dataset_dir = '../../data/sample_dataset/'
+save_dir = '../../data/saliency_dataset/'
+model_checkpoint_path = '../../model/pilotnetCloudV1'
 
 if __name__ == '__main__':
     i = 0
