@@ -1,18 +1,19 @@
 import numpy as np
 import random
 import skimage
+from PIL import Image
+from keras.preprocessing import image
 
 
 class SteeringImageDB(object):
     """Preprocess images of the road ahead and steering angles."""
 
-    def __init__(self, data_directory):
+    def __init__(self, data_directory, width, height):
         imgs = []
         angles = []
 
-        # points to the end of the last batch, train & validation
-        self.train_batch_pointer = 0
-        self.val_batch_pointer = 0
+        self.width = width
+        self.height = height
 
         # read data.txt
         data_path = data_directory + "/"
@@ -24,6 +25,12 @@ class SteeringImageDB(object):
                 so the steering wheel angle in radians is used as the output """
                 angles.append(float(line.split()[1]) * np.pi / 180)
 
+                # flip the image horizontally to augment dataset
+                '''
+                imgs.append(image.load_img(data_path + line.split()[0]).transpose(Image.FLIP_LEFT_RIGHT))
+                angles.append(-(float(line.split()[1]) * np.pi / 180))                
+                '''
+
         # shuffle list of images
         img_angle_pack = list(zip(imgs, angles))
         random.shuffle(img_angle_pack)
@@ -32,7 +39,7 @@ class SteeringImageDB(object):
         # get number of images
         self.num_images = len(imgs)
 
-        # split 80-20 train/validation
+        # split 80-20 train/val
         self.train_imgs = imgs[:int(self.num_images * 0.8)]
         self.train_angles = angles[:int(self.num_images * 0.8)]
 
@@ -42,24 +49,24 @@ class SteeringImageDB(object):
         self.num_train_images = len(self.train_imgs)
         self.num_val_images = len(self.val_imgs)
 
-    def load_train_batch(self, batch_size):
-        batch_imgs = []
-        batch_angles = []
-        for i in range(0, batch_size):
-            batch_imgs.append(skimage.transform.resize(
-                skimage.io.imread(self.train_imgs[(self.train_batch_pointer + i) % self.num_train_images])[-150:],
-                [66, 200]) / 255.0)
-            batch_angles.append([self.train_angles[(self.train_batch_pointer + i) % self.num_train_images]])
-        self.train_batch_pointer += batch_size
-        return np.array(batch_imgs), np.array(batch_angles)
+        print(
+            "Data contains %d images : %d train, %d validation" % (
+                self.num_images, self.num_train_images, self.num_val_images))
 
-    def load_val_batch(self, batch_size):
-        batch_imgs = []
-        batch_angles = []
-        for i in range(0, batch_size):
-            batch_imgs.append(skimage.transform.resize(
-                skimage.io.imread(self.val_imgs[(self.val_batch_pointer + i) % self.num_val_images])[-150:],
-                [66, 200]) / 255.0)
-            batch_angles.append([self.val_angles[(self.val_batch_pointer + i) % self.num_val_images]])
-        self.val_batch_pointer += batch_size
-        return np.array(batch_imgs), np.array(batch_angles)
+    def load_data(self, data_type):
+        imgs = []
+        angles = []
+
+        if data_type == 'train':
+            for i in range(0, self.num_train_images):
+                imgs.append(
+                    skimage.transform.resize(skimage.io.imread(self.train_imgs[i]), [self.height, self.width]) / 255.0)
+                angles.append(self.train_angles[i])
+
+        elif data_type == 'val':
+            for i in range(0, self.num_val_images):
+                imgs.append(
+                    skimage.transform.resize(skimage.io.imread(self.val_imgs[i]), [self.height, self.width]) / 255.0)
+                angles.append(self.val_angles[i])
+
+        return np.array(imgs), np.array(angles)
