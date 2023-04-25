@@ -3,9 +3,11 @@ import tensorflow as tf
 import skimage
 import numpy as np
 import cv2
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 steer_image_dir = './data/.logo/steering-wheel.png'
-dataset_dir = './data/saliency_dataset/'
+dataset_dir = './data/sample_dataset/'
 saliency_dataset_dir = './data/saliency_dataset/'
 model_checkpoint_path = './model/pilotnetCloudV1'
 
